@@ -1253,7 +1253,10 @@ public abstract class ProviderABRASF : ProviderBase
 
         if (!retornoWebservice.Sucesso) return;
 
-        var retornoLote = xmlRet.ElementAnyNs("GerarNfseResposta");
+        // EnviarLoteRpsSincrono responde com raiz "EnviarLoteRpsSincronoResposta" (nome da própria
+        // operação, conforme ABRASF); "GerarNfseResposta" é a raiz de retorno da operação GerarNfse.
+        // Mantido como fallback para provedores que porventura devolvam esse nome.
+        var retornoLote = xmlRet.ElementAnyNs("EnviarLoteRpsSincronoResposta") ?? xmlRet.ElementAnyNs("GerarNfseResposta");
         var listaNfse = retornoLote?.ElementAnyNs("ListaNfse");
 
         if (listaNfse == null)
