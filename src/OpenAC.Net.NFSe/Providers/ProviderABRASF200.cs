@@ -1124,12 +1124,15 @@ public abstract class ProviderABRASF200 : ProviderBase
             return;
         }
 
-        // Se a nota fiscal cancelada existir na coleção de Notas Fiscais, atualiza seu status:
-        var nota = notas.FirstOrDefault(x => x.IdentificacaoNFSe.Numero.Trim() == retornoWebservice.NumeroNFSe);
-        if (nota == null) return;
-
+        // A confirmação veio da prefeitura: o cancelamento está feito independentemente de a nota
+        // existir na coleção de Notas Fiscais (quem cancela só pelo número não precisa carregá-la).
+        // Antes o retorno era abandonado com Sucesso = false e sem erro algum quando a coleção estava vazia.
         retornoWebservice.Data = confirmacaoCancelamento.ElementAnyNs("DataHora")?.GetValue<DateTime>() ?? DateTime.MinValue;
         retornoWebservice.Sucesso = retornoWebservice.Data != DateTime.MinValue;
+
+        // Se a nota fiscal cancelada existir na coleção de Notas Fiscais, atualiza seu status:
+        var nota = notas.FirstOrDefault(x => x.IdentificacaoNFSe?.Numero?.Trim() == retornoWebservice.NumeroNFSe);
+        if (nota == null) return;
 
         nota.Situacao = SituacaoNFSeRps.Cancelado;
         nota.Cancelamento.Pedido.CodigoCancelamento = retornoWebservice.CodigoCancelamento;

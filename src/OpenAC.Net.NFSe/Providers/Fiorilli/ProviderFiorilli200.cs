@@ -92,5 +92,28 @@ internal sealed class ProviderFiorilli200 : ProviderABRASF200
             base.AssinarSubstituirNFSe(retornoWebservice);
     }
     
+    /// <summary>
+    /// O aviso "FI410 - serviço em desativação" que a Fiorilli devolve nas operações ABRASF vira alerta,
+    /// e não erro: a resposta pode trazer os dados/confirmação junto do aviso, e o parser precisa lê-los.
+    /// </summary>
+    protected override void MensagemErro(RetornoWebservice retornoWs, XContainer xmlRet, string xmlTag)
+    {
+        base.MensagemErro(retornoWs, xmlRet, xmlTag);
+        FiorilliNacionalCancelamento.ReclassificarAvisosDesativacao(retornoWs);
+    }
+
+    /// <summary>
+    /// Cancela pelo ABRASF e, se a prefeitura recusar por desativação do serviço (FI410), cancela pelo
+    /// webservice da Fiorilli no layout nacional (ver <see cref="FiorilliNacionalCancelamento"/>).
+    /// </summary>
+    public override RetornoCancelar CancelarNFSe(string codigoCancelamento, string numeroNFSe, string serieNFSe, decimal valorNFSe, string motivo, string? codigoVerificacao, NotaServicoCollection notas)
+    {
+        var retorno = base.CancelarNFSe(codigoCancelamento, numeroNFSe, serieNFSe, valorNFSe, motivo, codigoVerificacao, notas);
+        if (retorno.Sucesso || !FiorilliNacionalCancelamento.ContemAvisoDesativacao(retorno)) return retorno;
+
+        FiorilliNacionalCancelamento.CancelarLayoutNacional(this, retorno, notas);
+        return retorno;
+    }
+
     #endregion Methods
 }
